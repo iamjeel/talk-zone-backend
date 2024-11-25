@@ -4,6 +4,10 @@ import { Server } from 'socket.io';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import winston from 'winston';
+import cors from 'cors';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import morgan from 'morgan';
 
 dotenv.config();
 
@@ -12,7 +16,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: process.env.ALLOWED_ORIGIN || '*', // Use an environment variable to restrict allowed origins in production
     methods: ['GET', 'POST'],
   },
 });
@@ -22,13 +26,31 @@ const logger = winston.createLogger({
   level: 'info',
   transports: [
     new winston.transports.Console({ format: winston.format.simple() }),
-    new winston.transports.File({ filename: 'app.log' }),
+    new winston.transports.File({ filename: 'app.log', level: 'warn' }),
   ],
 });
 
+// Security and middleware setup
+app.use(helmet()); // Helps secure Express apps by setting various HTTP headers
+app.use(cors()); // CORS middleware to handle cross-origin requests
+app.use(morgan('combined')); // HTTP request logger for better request insights
+
+// Rate limiting to prevent abuse (100 requests per 15 minutes)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: 'Too many requests, please try again later.',
+});
+app.use(limiter);
+
 // Google API key from environment variables
 const googleApiKey = process.env.GOOGLE_API_KEY;
+if (!googleApiKey) {
+  logger.error('Google API Key is missing');
+  process.exit(1);
+}
 
+// Handling connections via socket.io
 io.on('connection', (socket) => {
   logger.info('A user connected');
 
@@ -41,6 +63,7 @@ io.on('connection', (socket) => {
     // Validate the coordinates
     if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
       logger.error('Invalid latitude or longitude');
+      socket.emit('error', 'Invalid coordinates');
       return;
     }
 
@@ -53,35 +76,45 @@ io.on('connection', (socket) => {
             component.types.includes('locality')
           )?.long_name || 'unknown-city';
 
-          // Generate a room name based on the city
           const roomName = city.replace(/\s+/g, '-').toLowerCase();
           logger.info(`User location: ${city}, Room: ${roomName}`);
-          
-          // Join the room and emit room name back to the user
+
           socket.join(roomName);
           socket.emit('joined_room', roomName);
 
-          // Handle incoming messages and broadcast them to the room
           socket.on('send_message', (message) => {
             logger.info(`Received message: "${message}"`);
             io.to(roomName).emit('receive_message', message);
           });
         } else {
           logger.error('Geocoding failed, no results returned');
+          socket.emit('error', 'Unable to determine location');
         }
       })
       .catch((err) => {
         logger.error('Google Maps Geocoding API error:', err);
+        socket.emit('error', 'Error fetching location data');
       });
+  } else {
+    logger.error('Latitude or Longitude not provided');
+    socket.emit('error', 'Coordinates are required');
   }
 
-  // Handle disconnection
   socket.on('disconnect', () => {
     logger.info('A user disconnected');
   });
 });
 
 // Server listen on port 3001 or environment specified port
-server.listen(process.env.PORT || 3001, () => {
-  logger.info(`Server is running on port ${process.env.PORT || 3001}`);
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  logger.info(`Server is running on port ${PORT}`);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  logger.info('SIGTERM signal received. Closing HTTP server.');
+  server.close(() => {
+    logger.info('HTTP server closed.');
+  });
 });
