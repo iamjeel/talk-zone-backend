@@ -32,3 +32,23 @@
 {"level":"info","message":"Received message: \"hello\""}
 {"level":"info","message":"Received message: \"hjahdkjasbd\""}
 {"level":"info","message":"Received message: \"dfjhbawhbf\""}
+{"level":"info","message":"Server is running on port 3001"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Received message: \"asdmn\""}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Received message: \"hello\""}
+{"level":"info","message":"Received message: \"adb\""}
+{"level":"info","message":"Received message: \"asdkjn\""}
+{"level":"info","message":"Received message: \"adjnb\""}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
