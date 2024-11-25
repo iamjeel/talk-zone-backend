@@ -18,6 +18,7 @@
     "express-rate-limit": "^6.1.0",
     "geocoder": "^0.2.3",
     "multer": "^1.4.5-lts.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "winston": "^3.17.0"
   }
 }
