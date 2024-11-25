@@ -16,7 +16,7 @@ const logger = winston.createLogger({
 });
 
 // Google API key from environment variables
-const googleApiKey = process.env.GOOGLE_API_KEY;
+const googleApiKey = process.env.google_api_key;
 if (!googleApiKey) {
   logger.error('Google API Key is missing');
   process.exit(1);
