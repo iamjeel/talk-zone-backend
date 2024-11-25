@@ -4,6 +4,7 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import winston from 'winston';
 
+// Load environment variables from a .env file
 dotenv.config();
 
 // Logger setup using winston
@@ -16,72 +17,77 @@ const logger = winston.createLogger({
 });
 
 // Google API key from environment variables
-const googleApiKey = process.env.google_api_key;
+const googleApiKey = process.env.GOOGLE_API_KEY;
 if (!googleApiKey) {
   logger.error('Google API Key is missing');
   process.exit(1);
 }
 
-// Shared instance of Socket.IO server
-let io;
+// Create the server for WebSockets using http.createServer
+const server = http.createServer();
+const io = new Server(server, {
+  path: '/api/socket', // Specify the path to handle WebSocket connections
+});
 
-export default async function handler(req, res) {
-  if (!io) {
-    const server = http.createServer((req, res) => res.end());
-    io = new Server(server);
+// Setup socket.io event listeners
+io.on('connection', (socket) => {
+  logger.info('A user connected');
 
-    // Socket.IO setup
-    io.on('connection', (socket) => {
-      logger.info('A user connected');
-      const { latitude, longitude } = req.query;
+  // Get latitude and longitude from query parameters
+  socket.on('join_room', (data) => {
+    const { latitude, longitude } = data;
 
-      if (latitude && longitude) {
-        const lat = parseFloat(latitude);
-        const lon = parseFloat(longitude);
+    // Validate coordinates
+    if (isNaN(latitude) || isNaN(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      logger.error('Invalid latitude or longitude');
+      socket.emit('error', 'Invalid coordinates');
+      return;
+    }
 
-        if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-          logger.error('Invalid latitude or longitude');
-          socket.emit('error', 'Invalid coordinates');
-          return;
-        }
+    // Geocode the coordinates using Google Maps API
+    axios
+      .get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleApiKey}`)
+      .then((response) => {
+        if (response.data.results && response.data.results.length > 0) {
+          const city = response.data.results[0].address_components.find((component) =>
+            component.types.includes('locality')
+          )?.long_name || 'unknown-city';
 
-        axios
-          .get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${googleApiKey}`)
-          .then((response) => {
-            if (response.data.results && response.data.results.length > 0) {
-              const city = response.data.results[0].address_components.find((component) =>
-                component.types.includes('locality')
-              )?.long_name || 'unknown-city';
+          const roomName = city.replace(/\s+/g, '-').toLowerCase();
+          logger.info(`User location: ${city}, Room: ${roomName}`);
 
-              const roomName = city.replace(/\s+/g, '-').toLowerCase();
-              logger.info(`User location: ${city}, Room: ${roomName}`);
+          socket.join(roomName);
+          socket.emit('joined_room', roomName);
 
-              socket.join(roomName);
-              socket.emit('joined_room', roomName);
-
-              socket.on('send_message', (message) => {
-                logger.info(`Received message: "${message}"`);
-                io.to(roomName).emit('receive_message', message);
-              });
-            } else {
-              logger.error('Geocoding failed, no results returned');
-              socket.emit('error', 'Unable to determine location');
-            }
-          })
-          .catch((err) => {
-            logger.error('Google Maps Geocoding API error:', err);
-            socket.emit('error', 'Error fetching location data');
+          // Listen for messages from the user
+          socket.on('send_message', (message) => {
+            logger.info(`Message received: ${message}`);
+            io.to(roomName).emit('receive_message', message);
           });
-      } else {
-        logger.error('Latitude or Longitude not provided');
-        socket.emit('error', 'Coordinates are required');
-      }
-
-      socket.on('disconnect', () => {
-        logger.info('A user disconnected');
+        } else {
+          logger.error('Geocoding failed, no results returned');
+          socket.emit('error', 'Unable to determine location');
+        }
+      })
+      .catch((err) => {
+        logger.error('Google Maps Geocoding API error:', err);
+        socket.emit('error', 'Error fetching location data');
       });
-    });
-  }
+  });
 
+  // Handle user disconnection
+  socket.on('disconnect', () => {
+    logger.info('A user disconnected');
+  });
+});
+
+// Export serverless function for Vercel
+export default (req, res) => {
+  // Respond to HTTP requests (for testing the endpoint)
   res.status(200).json({ message: 'Socket endpoint initialized' });
-}
+
+  // Start the WebSocket server
+  server.listen(3000, () => {
+    logger.info('Socket.io server is running');
+  });
+};
