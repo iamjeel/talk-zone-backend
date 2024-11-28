@@ -1,11 +1,13 @@
-// File: server.js
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import winston from 'winston';
-import validator from 'validator';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -13,11 +15,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: 'http://localhost:3000', // Your frontend URL
     methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   },
 });
 
+// Logger configuration
 const logger = winston.createLogger({
   level: 'info',
   transports: [
@@ -26,8 +30,84 @@ const logger = winston.createLogger({
   ],
 });
 
+// Middleware
+app.use(cors({ origin: 'http://localhost:3000', methods: ['GET', 'POST'], allowedHeaders: ['Content-Type', 'Authorization'] })); // CORS configuration
+app.use(bodyParser.json()); // Parse JSON requests
+
+// Temporary in-memory user storage
+const users = [];
 const googleApiKey = process.env.GOOGLE_API_KEY;
 
+// ** Signup Endpoint **
+app.post('/api/signup', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  // Check if user already exists
+  const userExists = users.find((user) => user.email === email);
+  if (userExists) {
+    return res.status(400).json({ message: 'User already exists' });
+  }
+
+  // Hash the password
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  // Store the new user
+  const newUser = { id: users.length + 1, email, password: hashedPassword };
+  users.push(newUser);
+
+  logger.info(`New user registered: ${email}`);
+  res.status(201).json({ message: 'User registered successfully' });
+});
+
+// ** Login Endpoint **
+app.post('/api/login', (req, res) => {
+  const { email, password } = req.body;
+
+  const user = users.find((u) => u.email === email);
+  if (!user) {
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
+
+  const isPasswordValid = bcrypt.compareSync(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
+
+  const token = jwt.sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  res.status(200).json({ token }); // Send the token back to the client
+});
+
+// ** Auth Middleware for Protected Routes **
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: 'Invalid or expired token' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// ** Protected Route Example **
+app.get('/api/protected', authenticateToken, (req, res) => {
+  res.json({ message: 'Welcome to the protected route!', user: req.user });
+});
+
+// ** Handle Preflight Requests **
+app.options('*', cors()); // Respond to preflight requests
+
+// ** Socket.IO for Real-Time Communication **
 io.on('connection', (socket) => {
   logger.info('A user connected');
 
@@ -57,12 +137,12 @@ io.on('connection', (socket) => {
           socket.emit('joined_room', roomName);
 
           socket.on('send_message', (message) => {
-            if (!validator.isLength(message, { min: 1, max: 255 })) {
+            if (!message || message.length > 255) {
               logger.warn('Message rejected due to invalid length');
               return;
             }
 
-            const sanitizedMessage = validator.escape(message);
+            const sanitizedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
             logger.info(`Broadcasting message: "${sanitizedMessage}"`);
             io.to(roomName).emit('receive_message', sanitizedMessage);
           });
@@ -80,6 +160,8 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 3001, () => {
-  logger.info(`Server is running on port ${process.env.PORT || 3001}`);
+// ** Start the Server **
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  logger.info(`Server is running on port ${PORT}`);
 });
