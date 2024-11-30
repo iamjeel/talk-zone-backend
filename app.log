@@ -259,3 +259,7 @@
 {"level":"info","message":"A user connected"}
 {"level":"info","message":"User location: Surrey, Room: surrey"}
 {"level":"info","message":"Broadcasting message: \"dsad\" at 19:28"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"A user disconnected"}

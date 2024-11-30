@@ -13,9 +13,23 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+// Define the allowed origins
+const allowedOrigins = [
+  'http://localhost:3000',  // Local development
+  'https://talkzone-staging.netlify.app',  // Production (Netlify)
+];
+
+
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:3000', // Your frontend URL
+    origin: function(origin, callback) {
+      // Allow requests with no origin (like mobile apps or Postman)
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   },
