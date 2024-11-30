@@ -136,6 +136,7 @@ io.on('connection', (socket) => {
           socket.join(roomName);
           socket.emit('joined_room', roomName);
 
+          // Handle sending messages with timestamp
           socket.on('send_message', (message) => {
             if (!message || message.length > 255) {
               logger.warn('Message rejected due to invalid length');
@@ -143,8 +144,20 @@ io.on('connection', (socket) => {
             }
 
             const sanitizedMessage = message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            logger.info(`Broadcasting message: "${sanitizedMessage}"`);
-            io.to(roomName).emit('receive_message', sanitizedMessage);
+            const timestamp = new Date();
+            const formattedTime = new Intl.DateTimeFormat('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }).format(timestamp);
+
+            const messageData = {
+              text: sanitizedMessage,
+              time: formattedTime, // Include the timestamp
+            };
+
+            logger.info(`Broadcasting message: "${sanitizedMessage}" at ${formattedTime}`);
+            io.to(roomName).emit('receive_message', messageData);
           });
         } else {
           logger.error('Geocoding failed, no results returned');
@@ -159,6 +172,7 @@ io.on('connection', (socket) => {
     logger.info('A user disconnected');
   });
 });
+
 
 // ** Start the Server **
 const PORT = process.env.PORT || 3001;

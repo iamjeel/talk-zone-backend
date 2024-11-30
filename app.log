@@ -215,3 +215,47 @@
 {"level":"info","message":"User location: Surrey, Room: surrey"}
 {"level":"info","message":"Broadcasting message: \"hellooo\""}
 {"level":"info","message":"A user disconnected"}
+{"level":"info","message":"Server is running on port 3001"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"hello\""}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"hello\""}
+{"level":"info","message":"Broadcasting message: \"addadd\""}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"a\""}
+{"level":"info","message":"Server is running on port 3001"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"hello\" at 2024-11-30T03:22:57.761Z"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"hello\" at 2024-11-30T03:24:06.935Z"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"hello\" at 2024-11-30T03:25:46.067Z"}
+{"level":"info","message":"Server is running on port 3001"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Server is running on port 3001"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"A user disconnected"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Server is running on port 3001"}
+{"level":"info","message":"A user connected"}
+{"level":"info","message":"User location: Surrey, Room: surrey"}
+{"level":"info","message":"Broadcasting message: \"dsad\" at 19:28"}
