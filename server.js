@@ -9,9 +9,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'production'
-      ? 'https://unsaid-staging.netlify.app/'  // Replace with your production frontend URL
-      : 'http://localhost:3000',  // Local development URL
+    origin:'https://unsaid-staging.netlify.app/',  // Replace with your production frontend URL
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true,  // Enable cookies if needed
