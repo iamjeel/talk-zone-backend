@@ -9,12 +9,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin:'https://unsaid-staging.netlify.app/',  // Replace with your production frontend URL
+    origin: 'https://unsaid-staging.netlify.app', // Replace with your production frontend URL
     methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true,  // Enable cookies if needed
+    allowedHeaders: ['Content-Type'], // Add any headers if necessary
+    credentials: true, // Set to true if your app uses cookies or sessions
   },
 });
+
 
 
 const googleApiKey = process.env.GOOGLE_API_KEY; // Updated variable name
