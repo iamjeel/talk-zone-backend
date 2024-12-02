@@ -13,6 +13,8 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:3000', // Local development
   'https://unsaid-staging.netlify.app', // Production
+  'https://un-said.com',
+  'https://www.un-said.com'
 ];
 
 // Use CORS middleware with a dynamic origin function
@@ -40,7 +42,7 @@ const server = http.createServer(app);
 // Initialize the Socket.io server and attach it to the HTTP server
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:3000', 'https://unsaid-staging.netlify.app'], // Allow frontend URLs
+    origin: ['http://localhost:3000', 'https://unsaid-staging.netlify.app', 'https://un-said.com', 'https://www.un-said.com'], // Allow frontend URLs
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true,
@@ -90,6 +92,7 @@ io.on('connection', (socket) => {
           socket.on('send_message', (message) => {
             const timestamp = new Date().toISOString();
             const messageWithTimestamp = { text: message, timestamp };
+            console.log(`New message in room ${roomName}:`, messageWithTimestamp);
             io.to(roomName).emit('receive_message', messageWithTimestamp);
           });
 
